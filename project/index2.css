@@ -1,0 +1,86 @@
+body{   
+    
+    background: -webkit-linear-gradient(yellow,green);
+    background: -o-linear-gradient(yellow,green);
+    background: -moz-linear-gradient(yellow,green);
+    background: linear-gradient(yellow,green);
+    
+    font-family: '微軟正黑體';
+}
+.header{
+    width:600px;
+    height:400px;
+    margin:0 auto;
+}
+p{
+    text-align:center;
+    font-size:50px;
+    padding-top: 100px;
+    border:8px solid black;
+    height:150px;
+    background-color: white;
+    border-radius:50px 50px 50px 50px;
+}
+.station{
+    width:300px;
+    height:200px;
+    float:left;
+    padding-left:100px;
+}
+.checkstation{
+    text-align: center;
+    font-size:50px;      
+    border:10px double black;
+    background-color: aqua;
+    font-weight:bold;
+}
+.bus{
+    width:300px;
+    height:200px;
+    float:right;
+    padding-right:100px;
+}
+.checkbus{
+    text-align: center;
+    font-size:50px;      
+    border:10px double black;
+    background-color: aqua;
+    font-weight:bold;
+
+}
+a{
+    color:black;
+    display: block;
+    text-decoration: none;
+}
+a:hover { 
+    color:red
+}
+
+
+/* 斷點 - 768px */
+@media(max-width: 768px){
+    .header{
+      width: 100%;
+      vertical-align: middle;
+      margin: auto;
+      float: none;
+    }
+
+    .station{
+        width: 100%;
+        margin: auto;
+        margin-top: -150px;
+        padding-left: 0;
+        float: none;
+    }
+
+    .bus{
+        width: 100%;
+        margin: auto;
+        padding-right:0;
+        margin-top: 100px;
+        float: none;
+    }
+
+  }

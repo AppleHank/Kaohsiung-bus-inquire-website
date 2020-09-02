@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="googlemap.css">
+    <script src="jquery-3.3.1.min.js"></script>
+    <script src="googlemap.js"></script>
+    <script type="text/javascript" src="Lib\sha1.js"></script>    
+    <script>
+            var Bus_num = [];
+            var stop_name = [];
+            var direction;
+            function get_bus() {
+                $.ajax({
+                    type: 'GET',
+                    url: 'http://ptx.transportdata.tw/MOTC/v2/Bus/StopOfRoute/City/Kaohsiung?&$format=JSON', 
+                    dataType: 'json',
+                    headers: GetAuthorizationHeader(),
+                    success: function (Data) {
+                        for(var i=0;i<Data.length;i++){
+                            if(Data[i].Direction==0){
+                                direction = '去';
+                            }
+                            else
+                                direction = '回';
+                            for(var j=0;j<Data[i].Stops.length;j++){
+                                for(var w=0;w<=stop_name.length;w++){
+                                    if(Data[i].Stops[j].StopName.Zh_tw+direction==stop_name[w]){
+                                        var sname_stat = 0;
+                                        break;
+                                    }
+                                    else
+                                        var sname_stat = 1;
+                                }
+                                if(sname_stat == 0){
+                                }
+                                else{
+                                    stop_name.push(Data[i].Stops[j].StopName.Zh_tw+direction)
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            get_bus();
+            </script>
+</head>
+<body>
+    <div class="header">
+        <div class="Input">
+            <input list="datalist" type="text" id='SName' placeholder="公車查詢">
+                <datalist id="datalist">    
+                </datalist>
+            <div class="search" onclick=get_bus_info()>搜尋</div>
+        </div>    
+    </div>
+
+
+    <div class="content">
+        <div id="stop_info" style="overflow: scroll"></div>
+        
+        <table></table>
+    </div>
+
+    <script>
+    setTimeout(() => {
+        for(var j=0;j<stop_name.length;j++){
+            sname_option = document.createElement('option');
+            sname_option.value = stop_name[j];
+            id_name = document.getElementById("datalist");
+            id_name.appendChild(sname_option);
+        }
+    }, 2500);
+        </script>
+</body>
+</html>
+
+<script>
+    function get_bus_info(){
+        var SName = document.getElementById('SName').value;
+        var bus_order = 1;
+        var bgnum = 0;
+       $.ajax({
+            type: 'GET',
+            url: 'http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Kaohsiung/?$format=JSON', //欲呼叫之API網址(此範例為台鐵車站資料)
+            dataType: 'json',
+            headers: GetAuthorizationHeader(),
+            success: function (Data) {
+                var list = '<table style="width:80%"><tr><th class=table_order>公車序</th><th class=table_bus>公車名稱</th><th class=table_arrive>預估到站時間</th></tr>';
+                for(var i=0;i<Data.length;i++){
+                    if(Data[i].Direction==0){
+                        direction = '去';
+                    }
+                    else
+                        direction = '回';
+                    if(Data[i].StopName.Zh_tw+direction==SName){
+                        if(bus_order%2==0)
+                                bgnum = 0;
+                            else
+                                bgnum = 1;  
+                            full_arrive_time = Data[i].NextBusTime;
+                            if(full_arrive_time==undefined){
+                                arrive_time = '末班車已過!';
+                            }
+                            else
+                                arrive_time = full_arrive_time.substr(11,5);
+                            list += "<tr class=table_tr><td class=table_order><a href=''><div class=table_div"+bgnum+">"+bus_order+"</div></a></td><td class=table_bus><a href=''><div class=table_div"+bgnum+">"+Data[i].RouteName.Zh_tw+"</div></a></td><td class=table_arrive><a href=''><div class=table_div"+bgnum+">"+arrive_time+"</div></td></a></tr>"
+                            }
+                            bus_order++;
+                        }
+                    
+                    
+                list+='</table>';
+                document.getElementById("stop_info").innerHTML=list;
+                }
+        })
+    }
+</script>

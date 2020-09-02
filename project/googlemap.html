@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>依公車查詢 googlemap</title>
+    <link rel="stylesheet" href="googlemap.css">
+    <script src="jquery-3.3.1.min.js"></script>
+    <script src="googlemap.js"></script>
+    <script type="text/javascript" src="Lib\sha1.js"></script>
+    <script>
+        
+    var Bus_num = [];
+    function get_bus() {
+        $.ajax({
+            type: 'GET',
+            url: 'http://ptx.transportdata.tw/MOTC/v2/Bus/StopOfRoute/City/Kaohsiung?&$format=JSON', //欲呼叫之API網址(此範例為台鐵車站資料)
+            dataType: 'json',
+            headers: GetAuthorizationHeader(),
+            success: function (Data) {
+                for(var i=0;i<Data.length;i++){
+                    if(Data[i].Direction==0){     
+                        Bus_num.push(Data[i].RouteName.Zh_tw);
+                    }
+                }
+            }
+        });
+    }
+    get_bus();
+    
+    </script>
+</head>
+<body>
+    <div class="header">
+        <div class="Input">
+            <input list="datalist" type="text" name="bus_name" id='Rname' placeholder="公車查詢">
+                <datalist id="datalist">    
+                </datalist>
+            <div class="search" onclick=get_info();test()>搜尋</div>
+        </div>
+    </div>
+
+
+    <div class="content">
+        <div id="bus_info_come" style="overflow: scroll">
+        </div>
+        <div id="bus_info_back" style="overflow: scroll">
+        </div>
+        <div class="map" id='gmap'>
+        </div>
+        <table style="width:80%">             
+        </table>
+        
+    </div>
+    
+    <script>
+            setTimeout(() => {
+                    for(var j=0;j<Bus_num.length;j++){
+                    bname_option = document.createElement('option');
+                    bname_option.value = Bus_num[j];
+                    id_name = document.getElementById("datalist");
+                    id_name.appendChild(bname_option);
+                }
+            }, 2000);
+    </script>
+
+</body>
+</html>
+
+<script>
+        var bus = '';
+        var bus_dir = ''
+        var arrive_time = 0;
+        var display_dir = 0;
+        function get_info() {
+            
+            var RName = document.getElementById('Rname').value;
+        $.ajax({
+            type: 'GET',
+            url: 'http://ptx.transportdata.tw/MOTC/v2/Bus/StopOfRoute/City/Kaohsiung/'+RName+'?$format=JSON',
+            dataType: 'json',
+            headers: GetAuthorizationHeader(),
+            success: function (Data) {
+                var Data = Data
+                var list = '<table><tr><th class=table_order>站序</th><th class=table_stop>站牌名稱</th><th class=table_bus>公車名稱</th><th class=table_arrive>預估到站時間</th></tr>';
+                $.ajax({
+                type: 'GET',
+                url: 'http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Kaohsiung/'+RName+'?$format=JSON',
+                dataType: 'json',
+                headers: GetAuthorizationHeader(),
+                success: function (bus_arrive_Data) {
+                    for(var i=0;i<Data.length;i++){
+                        var direction = '去';
+                        if(Data[i].Direction==0){
+                            for(var q=0;q<Data[i].Stops.length;q++){                           
+                                now_stop_name = Data[i].Stops[q].StopName.Zh_tw;
+                                now_stop_position_x = Data[i].Stops[q].StopPosition.PositionLat
+                                now_stop_position_y = Data[i].Stops[q].StopPosition.PositionLon
+                                if(q%2==0)
+                                    bgnum = 0;
+                                else
+                                    bgnum = 1;    
+                                for(var f=0;f<bus_arrive_Data.length;f++){     
+                                    if(now_stop_name==bus_arrive_Data[f].StopName.Zh_tw){
+                                        full_arrive_time = bus_arrive_Data[f].NextBusTime;
+                                        arrive_time = full_arrive_time.substr(11,5);
+                                        list+="<tr><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+q+"</div></td><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+now_stop_name+"</div></td><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+bus+direction+"</div></td><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+arrive_time+"</div></td>"
+                                        break;
+                                    }
+                                }  
+                            }
+                        list+='</table>';
+                        document.getElementById("bus_info_come").innerHTML=list;
+                        break;
+                        }  
+                    }                  
+                }
+            });                                        
+        }
+    })
+}
+
+    function test(){
+        var RName = document.getElementById('Rname').value;
+        $.ajax({
+            type: 'GET',
+            url: 'http://ptx.transportdata.tw/MOTC/v2/Bus/StopOfRoute/City/Kaohsiung/'+RName+'?$format=JSON', //欲呼叫之API網址(此範例為台鐵車站資料)
+            dataType: 'json',
+            headers: GetAuthorizationHeader(),
+            success: function (Data) {
+                var Data = Data
+                var list = '<table><tr><th class=table_order>站序</th><th class=table_stop>站牌名稱</th><th class=table_bus>公車名稱</th><th class=table_arrive>預估到站時間</th></tr>';
+                $.ajax({
+                type: 'GET',
+                url: 'http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Kaohsiung/'+RName+'?$format=JSON', //欲呼叫之API網址(此範例為台鐵車站資料)
+                dataType: 'json',
+                headers: GetAuthorizationHeader(),
+                success: function (bus_arrive_Data) {
+                    for(var i=0;i<Data.length;i++){
+                            var direction = '回';
+                        Data_b_name = Data[i].RouteName.Zh_tw
+                        if(Data[i].Direction==1){
+                            for(var q=0;q<Data[i].Stops.length;q++){                           
+                                now_stop_name = Data[i].Stops[q].StopName.Zh_tw;
+                                now_stop_position_x = Data[i].Stops[q].StopPosition.PositionLat
+                                now_stop_position_y = Data[i].Stops[q].StopPosition.PositionLon
+                                if(q%2==0)
+                                    bgnum = 0;
+                                else
+                                    bgnum = 1;    
+                                for(var f=0;f<bus_arrive_Data.length;f++){     
+                                    if(now_stop_name==bus_arrive_Data[f].StopName.Zh_tw){
+                                        full_arrive_time = bus_arrive_Data[f].NextBusTime;
+                                        if(full_arrive_time==undefined){
+                                            arrive_time = '末班車已過!';
+                                        }
+                                        else
+                                            arrive_time = full_arrive_time.substr(11,5);
+                                        list+="<tr><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+q+"</div></td><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+now_stop_name+"</div></td><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+bus+direction+"</div></td><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+arrive_time+"</div></td>"
+                                        break;
+                                    }
+                                }  
+                            }
+                        list+='</table>';
+                        document.getElementById("bus_info_back").innerHTML=list;
+                        break;
+                        }  
+                    }                  
+                }
+            });                                        
+        }
+    })
+    }
+    function change () {
+        $.ajax({
+            type: 'GET',
+            url: 'http://ptx.transportdata.tw/MOTC/v2/Bus/StopOfRoute/City/Kaohsiung?$format=JSON', //欲呼叫之API網址(此範例為台鐵車站資料)
+            dataType: 'json',
+            headers: GetAuthorizationHeader(),
+            success: function (Data) {
+                var Data = Data
+                var list = '<table><tr><th class=table_order>站序</th><th class=table_stop>站牌名稱</th><th class=table_bus>公車名稱</th><th class=table_arrive>預估到站時間</th></tr>';
+                $.ajax({
+                type: 'GET',
+                url: 'http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Kaohsiung/'+RName+'?$format=JSON', //欲呼叫之API網址(此範例為台鐵車站資料)
+                dataType: 'json',
+                headers: GetAuthorizationHeader(),
+                success: function (bus_arrive_Data) {
+                    for(var i=0;i<Data.length;i++){
+                        if(Data[i].Direction==0){
+                            var direction = '去';
+                        }
+                        else
+                            var direction = '回';
+                        Data_b_name = Data[i].RouteName.Zh_tw
+                        if(Data_b_name == RName){
+                            for(var q=0;q<Data[i].Stops.length;q++){                           
+                                now_stop_name = Data[i].Stops[q].StopName.Zh_tw;
+                                now_stop_position_x = Data[i].Stops[q].StopPosition.PositionLat
+                                now_stop_position_y = Data[i].Stops[q].StopPosition.PositionLon
+                                if(q%2==0)
+                                    bgnum = 0;
+                                else
+                                    bgnum = 1;    
+                                for(var f=0;f<bus_arrive_Data.length;f++){     
+                                    if(now_stop_name==bus_arrive_Data[f].StopName.Zh_tw){
+                                        full_arrive_time = bus_arrive_Data[f].NextBusTime;
+                                        if(full_arrive_time==undefined){
+                                            arrive_time = '末班車已過!';
+                                        }
+                                        else
+                                            arrive_time = full_arrive_time.substr(10,5);
+                                        list+="<tr><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+q+"</div></td><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+now_stop_name+"</div></td><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+bus+direction+"</div></td><td><div class=table_div"+bgnum+" onclick=change_map('"+now_stop_name+"',"+now_stop_position_x+","+now_stop_position_y+")>"+arrive_time+"</div></td>"
+                                        break;
+                                    }
+                                }  
+                            }
+                        list+='</table>';
+                        document.getElementById("bus_info").innerHTML=list;
+                        break;
+                        }  
+                    }                  
+                }
+            })
+            }
+        });
+    }
+
+//http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Kaohsiung/%E7%B4%8556?$top=30&$format=JSON
+
+
+    function change_map(position,position_x,position_y){    
+        $.ajax({
+            url: 'https://maps.googleapis.com/maps/api/geocode/json?address=UK&key=https://www.google.com/maps/embed/v1/search?key=AIzaSyD-BldubZNewwQysWLa7khyG9jJTeFxxgs&q=高雄火車站&zoom=17',
+            type: 'GET',
+            success: function(map) {
+                document.getElementById("gmap").innerHTML='<iframe width="100%" height="300" frameborder="0" style="border:0" src="https://www.google.com/maps/embed/v1/search?key=AIzaSyD-BldubZNewwQysWLa7khyG9jJTeFxxgs&q='+position+'&zoom=17&center='+position_x+','+position_y+'" allowfullscreen></iframe>'
+                }
+        });
+    }
+    change_map('高雄大學',22.733999,120.283671);
+    function GetAuthorizationHeader() {
+        var AppID = '924c821e9fe148bea0f855ca9e846adb';
+        var AppKey = '9_gKDJv9xseAmS-4_sZqNU-xyzo';
+    
+        var GMTString = new Date().toGMTString();
+        var ShaObj = new jsSHA('SHA-1', 'TEXT');
+        ShaObj.setHMACKey(AppKey, 'TEXT');
+        ShaObj.update('x-date: ' + GMTString);
+        var HMAC = ShaObj.getHMAC('B64');
+        var Authorization = 'hmac username=\"' + AppID + '\", algorithm=\"hmac-sha1\", headers=\"x-date\", signature=\"' + HMAC + '\"';
+    
+        return { 'Authorization': Authorization, 'X-Date': GMTString /*,'Accept-Encoding': 'gzip'*/}; //如果要將js運行在伺服器，可額外加入 'Accept-Encoding': 'gzip'，要求壓縮以減少網路傳輸資料量
+    }
+    
+    </script>

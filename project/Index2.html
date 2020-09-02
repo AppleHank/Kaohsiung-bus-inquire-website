@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script type="text/javascript" src="Lib\sha1.js"></script>
+</head>
+<body>
+    <a>請輸入車號:</a>
+    <input type="text" id="RouteName">
+    <input type="button" onclick=get_info() value='搜尋'>
+</body>
+</html>
+
+<script>
+    function get_info() {
+        var RName = document.getElementById('RouteName').value;
+        alert(RName);
+    $.ajax({
+        type: 'GET',
+        url: 'http://ptx.transportdata.tw/MOTC/v2/Bus/StopOfRoute/City/Kaohsiung?$format=JSON', //欲呼叫之API網址(此範例為台鐵車站資料)
+        dataType: 'json',
+        headers: GetAuthorizationHeader(),
+        success: function (Data) {
+            for(var i=0;i<Data.length;i++){
+                if(Data[i].RouteName.Zh_tw==RName){
+                    $('body').text(JSON.stringify(Data[i].RouteName.Zh_tw));
+                }
+            }
+        }
+    });
+}
+
+function GetAuthorizationHeader() {
+    var AppID = '924c821e9fe148bea0f855ca9e846adb';
+    var AppKey = '9_gKDJv9xseAmS-4_sZqNU-xyzo';
+
+    var GMTString = new Date().toGMTString();
+    var ShaObj = new jsSHA('SHA-1', 'TEXT');
+    ShaObj.setHMACKey(AppKey, 'TEXT');
+    ShaObj.update('x-date: ' + GMTString);
+    var HMAC = ShaObj.getHMAC('B64');
+    var Authorization = 'hmac username=\"' + AppID + '\", algorithm=\"hmac-sha1\", headers=\"x-date\", signature=\"' + HMAC + '\"';
+
+    return { 'Authorization': Authorization, 'X-Date': GMTString /*,'Accept-Encoding': 'gzip'*/}; //如果要將js運行在伺服器，可額外加入 'Accept-Encoding': 'gzip'，要求壓縮以減少網路傳輸資料量
+}
+
+</script>
